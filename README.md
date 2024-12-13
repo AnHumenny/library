@@ -14,27 +14,31 @@
 ## Установка
 
 python -m venv venv
-source venv/bin/activate  # Для macOS/Linux
+source venv/bin/activate  # Для macOS/Linux<br>
 venv\Scripts\activate     # Для Windows
 
 ## Установите зависимости:
 pip install -r requirements.txt
 
-#Настройте базу данных:
-##В корне проекта в файле .env укажите конфигурацию
-host="адрес хоста"
-user="имя пользователя"
-password="пароль пользователя"
-database="имя базы данных"
+**Настройте базу данных:**<br>
+*В корне проекта в файле .env укажите конфигурацию*<br>
+*host="адрес хоста"*<br>
+*user="имя пользователя"*<br>
+*password="пароль пользователя"*<br>
+*database="имя базы данных"*
 
 ##запустите скрипт:
-cd create
-python3 create_structure.py
-cd ../
+```bash
+**cd create**
+**python3 create_structure.py**
+**cd ../**
+```
 
 ##Запуск приложения
 - **Чтобы запустить приложение, выполните следующую команду:**
-- **python3 app.py**
+```bash
+python3 app.py
+```
 
 
 
