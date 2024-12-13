@@ -29,9 +29,9 @@ pip install -r requirements.txt
 
 ##запустите скрипт:
 ```bash
-**cd create**
-**python3 create_structure.py**
-**cd ../**
+cd create
+python3 create_structure.py
+cd ../
 ```
 
 ##Запуск приложения
