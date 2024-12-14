@@ -12,6 +12,11 @@ class DBook(Model):
     describe = Column(String(1000), nullable=True, default='')
     hashed = Column(String(200))
 
+class DUser(Model):
+    __tablename__ = "user"
+    username = Column(String(50))
+    password = Column(String(100))
+
 
 
 

@@ -1,12 +1,15 @@
 import hashlib
+from itsdangerous import URLSafeTimedSerializer
 import os
-from quart import Quart, request, render_template, send_from_directory
+from quart import Quart, request, render_template, send_from_directory, jsonify, redirect, url_for, session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 from shemas.repository import Repo
 from create.create_structure import engine
 
 app = Quart(__name__)
+app.secret_key = "your_secret_key"      #os.urandom(24)  # Секретный ключ для шифрования токенов
+serializer = URLSafeTimedSerializer(app.secret_key)
 
 async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
@@ -20,23 +23,52 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 async def serve_file(filename):
     return await send_from_directory('files', filename)
 
+# Создание токена
+def generate_token(username):
+    return serializer.dumps(username)
+
+# Проверка токена
+def verify_token(token):
+    try:
+        username = serializer.loads(token, max_age=3600)  # Токен действителен 1 час
+        return username
+    except Exception:
+        return None
+
+@app.route('/login')
+async def log():
+    return await render_template("login.html")
+
+@app.route('/login', methods=['POST'])
+async def login():
+    form_data = await request.form
+    username = form_data.get('username')
+    password = form_data.get('password')
+    answer = await Repo.select_user(username, password)
+    print("это ответ ", answer)
+    if answer is True:
+        token = generate_token(username)
+        session['token'] = token
+        return redirect(url_for('index'))
+    return jsonify({"message": "Ошибка доступа"}), 401
+
 @app.route('/')
 async def index():
     page = int(request.args.get('page', 1))
     per_page = 20
-    async with async_session() as session:
-        async with session.begin():
+    async with async_session() as sessions:
+        async with sessions.begin():
             books = await Repo.select_all_book()
             paginated_books = books[(page-1)*per_page:page*per_page]
-    return await render_template('index.html', book_all=paginated_books,
-                                 total_books=len(books), page=page, per_page=per_page)
+        return await render_template('index.html', book_all=paginated_books,
+                                     total_books=len(books), page=page, per_page=per_page)
 
 @app.route('/')                                               # пагинация
 async def pagination():
     page = int(request.args.get('page', 1))
     per_page = 20
-    async with async_session() as session:
-        async with session.begin():
+    async with async_session() as sessions:
+        async with sessions.begin():
             books = await Repo.select_all_book()
             paginated_books = books[(page-1)*per_page:page*per_page]
     pagination_links = []
@@ -49,8 +81,8 @@ async def pagination():
 async def sorted_category():
     page = int(request.args.get('page', 1))
     per_page = 20
-    async with async_session() as session:
-        async with session.begin():
+    async with async_session() as sessions:
+        async with sessions.begin():
             books = await Repo.sorted_category()
             paginated_books = books[(page-1)*per_page:page*per_page]
     return await render_template('index.html', book_all=paginated_books,
@@ -60,8 +92,8 @@ async def sorted_category():
 async def sorted_autor():
     page = int(request.args.get('page', 1))
     per_page = 20
-    async with async_session() as session:
-        async with session.begin():
+    async with async_session() as sessions:
+        async with sessions.begin():
             books = await Repo.sorted_autor()
             paginated_books = books[(page-1)*per_page:page*per_page]
     return await render_template('index.html', book_all=paginated_books,
@@ -72,8 +104,8 @@ async def search_book_author():
     form_data = await request.form
     search = form_data.get('search')
     search_type = form_data.get('search_type')
-    async with async_session() as session:
-        async with session.begin():
+    async with async_session() as sessions:
+        async with sessions.begin():
             books = await Repo.search_book(search, search_type)
             print("books", books)
             if books is None:
@@ -90,7 +122,13 @@ def generate_file_hash(file):                              # хеширован�
 
 @app.route('/upload')
 async def upload_form():
-    return await render_template("upload.html")
+    token = session.get('token')  # Извлечение токена из сессии
+    access = verify_token(token)
+    print('это токен', token)
+    print('это access', access)
+    if access:
+        return await render_template("upload.html")
+    return await render_template("login.html")
 
 def allowed_file(filename):                                 # проверка допустимых типов файлов
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -137,7 +175,12 @@ async def upload_file():
 
 @app.route('/delete')
 async def delete_file():
-    return await render_template("delete.html")
+    token = session.get('token')  # Извлечение токена из сессии
+    access = verify_token(token)
+    if access:
+        return await render_template("delete.html")
+    return await render_template("login.html")
+
 
 @app.route('/drop_file', methods=['POST'])
 async def drop_file():

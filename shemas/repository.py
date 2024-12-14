@@ -1,7 +1,7 @@
-from sqlalchemy import select, insert, asc, delete
+from sqlalchemy import select, insert, asc, delete, and_
 from sqlalchemy.exc import NoResultFound, IntegrityError, SQLAlchemyError
 
-from shemas.database import DBook
+from shemas.database import DBook, DUser
 from create.create_structure import new_session
 
 class Repo:
@@ -93,4 +93,13 @@ class Repo:
                 await session.rollback()
                 return False
 
+    @classmethod
+    async def select_user(cls, username, password):
+        async with new_session() as session:
+            q = select(DUser).where(and_(DUser.username == username, DUser.password == password))
+            result = await session.execute(q)
+            answer = result.scalar()
+            if answer is None:
+                return None
+            return True
 
