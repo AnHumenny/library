@@ -13,7 +13,7 @@ engine = create_async_engine(f"mysql+asyncmy://{os.getenv('user')}:{os.getenv('p
 
 new_session = async_sessionmaker(engine, expire_on_commit=False)
 
-async def create_database_if_not_exists(db_name):
+async def create_database_if_not_exists():
     async with engine_base.begin() as conn:
         await conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {os.getenv('database')}"))
 
@@ -23,7 +23,7 @@ async def create_tables():
         await conn.run_sync(DUser.metadata.create_all)
 
 async def main():
-    await create_database_if_not_exists({os.getenv('database')})
+    await create_database_if_not_exists()
     await create_tables()
 
 if __name__ == "__main__":

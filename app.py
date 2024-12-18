@@ -1,5 +1,6 @@
 import hashlib
-from itsdangerous import URLSafeTimedSerializer
+from datetime import datetime
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature, BadData
 import os
 from quart import Quart, request, render_template, send_from_directory, jsonify, redirect, url_for, session
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +9,7 @@ from shemas.repository import Repo
 from create.create_structure import engine
 
 app = Quart(__name__)
-app.secret_key = "your_secret_key"      #os.urandom(24)  # Секретный ключ для шифрования токенов
+app.secret_key = os.urandom(24)  # ключ для шифрования токенов
 serializer = URLSafeTimedSerializer(app.secret_key)
 
 async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -19,38 +20,57 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024         # max 16mb
 ALLOWED_EXTENSIONS = {'fb2', 'epub', 'pdf'}                 # разрешённые типы файлов
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+
 @app.route('/files/<path:filename>')                        # директория загрузки файлов
 async def serve_file(filename):
     return await send_from_directory('files', filename)
 
-# Создание токена
-def generate_token(username):
+
+def generate_token(username):                               # создание токена
     return serializer.dumps(username)
 
-# Проверка токена
-def verify_token(token):
+
+def verify_token(token):                                    # проверка токена
     try:
         username = serializer.loads(token, max_age=3600)  # Токен действителен 1 час
         return username
-    except Exception:
+    except SignatureExpired:
+        print("Токен истек.")
         return None
+    except BadSignature:
+        print("Недействительная подпись токена.")
+        return None
+    except BadData:
+        print("Некорректные данные токена.")
+        return None
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
+        return None
+
 
 @app.route('/login')
 async def log():
     return await render_template("login.html")
+
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
 
 @app.route('/login', methods=['POST'])
 async def login():
     form_data = await request.form
     username = form_data.get('username')
     password = form_data.get('password')
-    answer = await Repo.select_user(username, password)
-    print("это ответ ", answer)
+    hashed_password = hash_password(password)
+    answer = await Repo.select_user(username, hashed_password)
+
     if answer is True:
         token = generate_token(username)
         session['token'] = token
         return redirect(url_for('index'))
     return jsonify({"message": "Ошибка доступа"}), 401
+
 
 @app.route('/')
 async def index():
@@ -62,6 +82,7 @@ async def index():
             paginated_books = books[(page-1)*per_page:page*per_page]
         return await render_template('index.html', book_all=paginated_books,
                                      total_books=len(books), page=page, per_page=per_page)
+
 
 @app.route('/')                                               # пагинация
 async def pagination():
@@ -77,6 +98,7 @@ async def pagination():
     return await render_template('index.html', book_all=paginated_books,
                                  total_books=len(books), page=page, per_page=per_page)
 
+
 @app.route('/category')
 async def sorted_category():
     page = int(request.args.get('page', 1))
@@ -87,6 +109,7 @@ async def sorted_category():
             paginated_books = books[(page-1)*per_page:page*per_page]
     return await render_template('index.html', book_all=paginated_books,
                                  total_books=len(books), page=page, per_page=per_page)
+
 
 @app.route('/autor')
 async def sorted_autor():
@@ -99,6 +122,7 @@ async def sorted_autor():
     return await render_template('index.html', book_all=paginated_books,
                                  total_books=len(books), page=page, per_page=per_page)
 
+
 @app.route('/search', methods=['POST'])
 async def search_book_author():
     form_data = await request.form
@@ -107,11 +131,11 @@ async def search_book_author():
     async with async_session() as sessions:
         async with sessions.begin():
             books = await Repo.search_book(search, search_type)
-            print("books", books)
             if books is None:
                 return await render_template('search.html', err='По запросу ничего не найдено,'
                                                                   ' измените параметры поиска')
     return await render_template('search.html',books=books)
+
 
 def generate_file_hash(file):                              # хеширование имени файла
     hash_md5 = hashlib.md5()
@@ -120,21 +144,24 @@ def generate_file_hash(file):                              # хеширован�
     file.seek(0)
     return hash_md5.hexdigest()
 
+
 @app.route('/upload')
 async def upload_form():
     token = session.get('token')  # Извлечение токена из сессии
     access = verify_token(token)
-    print('это токен', token)
-    print('это access', access)
     if access:
         return await render_template("upload.html")
     return await render_template("login.html")
 
+
 def allowed_file(filename):                                 # проверка допустимых типов файлов
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 @app.route('/upload', methods=['POST'])
 async def upload_file():
+    now = datetime.now()
+    date = now.strftime("%Y-%m-%d")
     files = await request.files
     if 'file' not in files:
         q = 'Нет файла для загрузки'
@@ -167,7 +194,7 @@ async def upload_file():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
     await file.save(file_path)
 
-    l = [title, author, category, description, new_filename]
+    l = [title, author, category, description, new_filename, date]
     await Repo.insert_new_book(l)
 
     q = f'Файл успешно загружен'
@@ -194,6 +221,7 @@ async def drop_file():
         else:
             print(f"Файл {file_path} не найден.")
     return await render_template('delete.html')
+
 
 if __name__ == '__main__':
     app.run(debug=False)
