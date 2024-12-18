@@ -17,7 +17,7 @@ config = context.config
 fileConfig(config.config_file_name)
 
 # Добавьте URL для подключения к базе данных
-config.set_main_option('sqlalchemy.url', 'mysql+pymysql://admin:1qazxcde3@localhost:3306/library')
+config.set_main_option('sqlalchemy.url', 'mysql+pymysql://user:password@host:port/db_name')
 
 # Добавьте вашу базу моделей для автоматического обнаружения изменений
 target_metadata = DUser.metadata
