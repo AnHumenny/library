@@ -5,11 +5,8 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, QueuePool
 from alembic import context
 from shemas.database import DUser
-user = os.getenv('user')
-password = os.getenv('password')
-host = os.getenv('host')
-port = os.getenv('port')
-db_name = os.getenv('database')
+from dotenv import load_dotenv
+load_dotenv()
 
 config = context.config
 
@@ -17,7 +14,8 @@ config = context.config
 fileConfig(config.config_file_name)
 
 # Добавьте URL для подключения к базе данных
-config.set_main_option('sqlalchemy.url', 'mysql+pymysql://user:password@host:port/db_name')
+config.set_main_option('sqlalchemy.url', f"mysql+pymysql:/{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+                                   f"@{os.getenv('DB_HOST')}/{os.getenv('DB_DATABASE')}")
 
 # Добавьте вашу базу моделей для автоматического обнаружения изменений
 target_metadata = DUser.metadata
