@@ -1,8 +1,18 @@
 from sqlalchemy import select, insert, asc, delete, and_
 from sqlalchemy.exc import NoResultFound, IntegrityError, SQLAlchemyError
-
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from shemas.database import DBook, DUser
-from create.create_structure import new_session
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+
+engine = create_async_engine(f"mysql+asyncmy://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+                                   f"@{os.getenv('DB_HOST')}/{os.getenv('DB_DATABASE')}", echo=True)
+
+
+new_session = async_sessionmaker(engine, expire_on_commit=False)
+
 
 class Repo:
     @classmethod
