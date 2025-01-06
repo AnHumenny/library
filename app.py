@@ -5,8 +5,7 @@ import os
 from quart import Quart, request, render_template, send_from_directory, jsonify, redirect, url_for, session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-from shemas.repository import Repo
-from create.create_structure import engine
+from shemas.repository import Repo, engine
 
 app = Quart(__name__)
 app.secret_key = os.urandom(24)  # ключ для шифрования токенов
@@ -64,7 +63,6 @@ async def login():
     password = form_data.get('password')
     hashed_password = hash_password(password)
     answer = await Repo.select_user(username, hashed_password)
-
     if answer is True:
         token = generate_token(username)
         session['token'] = token
