@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from create_structure import engine
 load_dotenv()
 
-
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -23,9 +22,10 @@ async def create_user(username, password):
             new_user = DUser(username=username, password=hashed_password)
             session.add(new_user)
 
+
 async def main():
-    user = 'admin'
-    password = 'admin'
+    user = 'user'
+    password = 'user'
     await create_user(user, password)
 
 if __name__ == "__main__":
