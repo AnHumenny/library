@@ -77,12 +77,9 @@ async def index():
     async with async_session() as sessions:
         async with sessions.begin():
             books = await Repo.select_all_book()
-            total_answer = len(books)
             start = (page - 1) * per_page
             end = start + per_page
             paginated_books = books[start:end]
-        pagination_links = []
-        total_books = (total_answer // per_page) + (1 if total_answer % per_page > 0 else 0)
         return await render_template('index.html', book_all=paginated_books,
                                      total_books=len(books), page=page, per_page=per_page)
 
