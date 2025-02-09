@@ -73,7 +73,7 @@ async def login():
 @app.route('/')
 async def index():
     page = int(request.args.get('page', 1))
-    per_page = 20
+    per_page = 30
     async with async_session() as sessions:
         async with sessions.begin():
             books = await Repo.select_all_book()
@@ -87,7 +87,7 @@ async def index():
 @app.route('/category')
 async def sorted_category():
     page = int(request.args.get('page', 1))
-    per_page = 20
+    per_page = 30
     async with async_session() as sessions:
         async with sessions.begin():
             books = await Repo.sorted_category()
@@ -99,7 +99,7 @@ async def sorted_category():
 @app.route('/autor')
 async def sorted_autor():
     page = int(request.args.get('page', 1))
-    per_page = 20
+    per_page = 30
     async with async_session() as sessions:
         async with sessions.begin():
             books = await Repo.sorted_autor()
@@ -146,7 +146,7 @@ def allowed_file(filename):                                 # проверка �
 @app.route('/upload', methods=['POST'])
 async def upload_file():
     now = datetime.now()
-    date = now.strftime("%Y-%m-%d")
+    date = now.strftime("%Y-%m-%d-%H-%M-%S")
     files = await request.files
     if 'file' not in files:
         q = 'Нет файла для загрузки'
@@ -174,7 +174,7 @@ async def upload_file():
 
     file_hash = generate_file_hash(file)
     file_extension = file.filename.rsplit('.', 1)[1].lower()
-    new_filename = f"{file_hash}.{file_extension}"
+    new_filename = f"{date}_{file_hash}.{file_extension}"
 
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
     await file.save(file_path)
