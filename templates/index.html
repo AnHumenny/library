@@ -9,6 +9,7 @@
         <th class="title-table table-item" width="20%">Автор</th>
         <th class="title-table table-item" width="20%">Категория</th>
         <th class="title-table table-item" width="35%">Описание</th>
+        <th class="title-table table-item" width="35%">Дата загрузки</th>
     </tr>
     {% for book in book_all %}
     <tr class="table-string">
@@ -26,6 +27,9 @@
         </td>
         <td class="title-table table-item" width="35%">
             {{ book.describe }}
+        </td>
+        <td class="title-table table-item" width="35%">
+            {{ book.date_created }}
         </td>
     </tr>
     {% endfor %}
