@@ -1,4 +1,5 @@
 import hashlib
+import subprocess
 from datetime import datetime
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature, BadData
 import os
@@ -6,6 +7,7 @@ from quart import Quart, request, render_template, send_from_directory, jsonify,
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 from shemas.repository import Repo, engine
+
 
 app = Quart(__name__)
 app.secret_key = os.urandom(24)  # ключ для шифрования токенов
@@ -73,40 +75,43 @@ async def login():
 @app.route('/')
 async def index():
     page = int(request.args.get('page', 1))
-    per_page = 30
+    per_page = 20
     async with async_session() as sessions:
         async with sessions.begin():
-            books = await Repo.select_all_book()
-            start = (page - 1) * per_page
-            end = start + per_page
-            paginated_books = books[start:end]
-        return await render_template('index.html', book_all=paginated_books,
-                                     total_books=len(books), page=page, per_page=per_page)
+            books = await Repo.select_all_book(sessions, page, per_page)
+            total_books = await Repo.count_books(sessions)
+        return await render_template(
+            'index.html', book_all=books, total_books=total_books,
+                                           page=page, per_page=per_page
+        )
 
 
 @app.route('/category')
 async def sorted_category():
     page = int(request.args.get('page', 1))
-    per_page = 30
+    per_page = 20
     async with async_session() as sessions:
         async with sessions.begin():
-            books = await Repo.sorted_category()
-            paginated_books = books[(page-1)*per_page:page*per_page]
-    return await render_template('index.html', book_all=paginated_books,
-                                 total_books=len(books), page=page, per_page=per_page)
+            books = await Repo.sorted_category(sessions, page, per_page)
+            total_books = await Repo.count_books(sessions)
+        return await render_template(
+            'index.html', book_all=books, total_books=total_books,
+                                           page=page, per_page=per_page
+        )
 
 
 @app.route('/autor')
 async def sorted_autor():
     page = int(request.args.get('page', 1))
-    per_page = 30
+    per_page = 20
     async with async_session() as sessions:
         async with sessions.begin():
-            books = await Repo.sorted_autor()
-            paginated_books = books[(page-1)*per_page:page*per_page]
-    return await render_template('index.html', book_all=paginated_books,
-                                 total_books=len(books), page=page, per_page=per_page)
-
+            books = await Repo.sorted_category(sessions, page, per_page)
+            total_books = await Repo.count_books(sessions)
+        return await render_template(
+            'index.html', book_all=books, total_books=total_books,
+            page=page, per_page=per_page
+        )
 
 @app.route('/search', methods=['POST'])
 async def search_book_author():
@@ -137,6 +142,16 @@ async def upload_form():
     if access:
         return await render_template("upload.html")
     return await render_template("login.html")
+
+
+def create_directory(now):
+    create_folder = now.strftime("%Y-%m-%d")
+    dir_name = os.path.join("files", create_folder)
+    try:
+        os.makedirs(dir_name, exist_ok=True)
+        return create_folder
+    except OSError as e:
+        return f"Ошибка при создании директории: {str(e)}"
 
 
 def allowed_file(filename):                                 # проверка допустимых типов файлов
@@ -174,8 +189,8 @@ async def upload_file():
 
     file_hash = generate_file_hash(file)
     file_extension = file.filename.rsplit('.', 1)[1].lower()
-    new_filename = f"{date}_{file_hash}.{file_extension}"
-
+    dir_name = create_directory(now)
+    new_filename = f"{dir_name}/{title}_{file_hash}.{file_extension}"
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
     await file.save(file_path)
 
@@ -205,7 +220,7 @@ async def drop_file():
             os.remove(file_path)
         else:
             print(f"Файл {file_path} не найден.")
-    return await render_template('delete.html')
+    return await render_template('delete.html', answer=answer)
 
 
 if __name__ == '__main__':
