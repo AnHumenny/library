@@ -1,6 +1,6 @@
-from sqlalchemy import select, insert, asc, delete, and_
+from sqlalchemy import select, insert, asc, delete, and_, desc, func
 from sqlalchemy.exc import NoResultFound, IntegrityError, SQLAlchemyError
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from shemas.database import DBook, DUser
 import os
 from dotenv import load_dotenv
@@ -16,61 +16,64 @@ new_session = async_sessionmaker(engine, expire_on_commit=False)
 
 class Repo:
     @classmethod
-    async def select_all_book(cls):
-        async with new_session() as session:
-            q = select(DBook)
-            result = await session.execute(q)
-            answer = result.scalars().all()
-            return answer
+    async def select_all_book(cls, session: AsyncSession, page: int, per_page: int):
+        offset = (page - 1) * per_page
+        q = select(DBook).order_by(desc(DBook.id)).offset(offset).limit(per_page)
+        result = await session.execute(q)
+        return result.scalars().all()
 
     @classmethod
-    async def sorted_category(cls):
-        async with new_session() as session:
-            q = select(DBook).order_by(asc(DBook.category))
-            result = await session.execute(q)
-            answer = result.scalars().all()
-            await session.close()
-            return answer
+    async def count_books(cls, session: AsyncSession):
+        q = select(func.count()).select_from(DBook)
+        result = await session.execute(q)
+        return result.scalar_one()
 
     @classmethod
-    async def sorted_autor(cls):
-        async with new_session() as session:
-            q = select(DBook).order_by(asc(DBook.autor))
-            result = await session.execute(q)
-            answer = result.scalars().all()
-            await session.close()
-            return answer
+    async def sorted_category(cls, session: AsyncSession, page: int, per_page: int):
+        offset = (page - 1) * per_page
+        q = select(DBook).order_by(desc(DBook.category)).offset(offset).limit(per_page)
+        result = await session.execute(q)
+        return result.scalars().all()
+
+    @classmethod
+    async def sorted_autor(cls, session: AsyncSession, page: int, per_page: int):
+        offset = (page - 1) * per_page
+        q = select(DBook).order_by(desc(DBook.autor)).offset(offset).limit(per_page)
+        result = await session.execute(q)
+        return result.scalars().all()
 
     @classmethod
     async def insert_new_book(cls, l):
         async with new_session() as session:
-            q = insert(DBook).values(l)
-            await session.execute(q)
-            await session.commit()
-            await session.close()
-            return
+            async with session.begin():
+                try:
+                    q = insert(DBook).values(l)
+                    await session.execute(q)
+                    await session.commit()
+                    return
+                except Exception as e:
+                    await session.rollback()
+                    raise e
 
     @classmethod
     async def drop_file(cls, ssid):
+        ssid = int(ssid)
         async with new_session() as session:
             try:
                 query = select(DBook).where(DBook.id == int(ssid))
                 result = await session.execute(query)
                 record = result.scalar_one_or_none()
+
                 if record is None:
-                    return False
+                    return f"Файл с указанным идентификатором {ssid} не найден."
+
                 delete_query = delete(DBook).where(DBook.id == int(ssid))
                 await session.execute(delete_query)
                 await session.commit()
-                return
-            except ValueError:
-                return False
-            except NoResultFound:
-                return False
-            except IntegrityError:
-                await session.rollback()
-                return False
-            except SQLAlchemyError:
+                return f"Файл с указанным идентификатором {ssid} успешно удалён!"
+
+            except (ValueError, NoResultFound, IntegrityError, SQLAlchemyError) as e:
+                print("error", e)
                 await session.rollback()
                 return False
 
