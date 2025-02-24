@@ -1,57 +1,93 @@
 {% include 'head.html' %}
+
 <body>
 
-<p>{{ success }}</p>
-<table class="main-table" id="main-table" align="center" width="90%">
-    <tr>
-        <th class="title-table table-item" width="5%">ID</th>
-        <th class="title-table table-item" width="20%">Название</th>
-        <th class="title-table table-item" width="20%">Автор</th>
-        <th class="title-table table-item" width="20%">Категория</th>
-        <th class="title-table table-item" width="35%">Описание</th>
-        <th class="title-table table-item" width="35%">Дата загрузки</th>
-    </tr>
-    {% for book in book_all %}
-    <tr class="table-string">
-        <td class="title-table table-item" width="5%">
-            {{ book.id }}
-        </td>
-        <td class="title-table table-item" width="20%">
-            <a href="files/{{ book.hashed }}"> {{ book.title }} </a>
-        </td>
-        <td class="title-table table-item" width="20%">
-            {{ book.autor }}
-        </td>
-        <td class="title-table table-item" width="20%">
-            {{ book.category }}
-        </td>
-        <td class="title-table table-item" width="35%">
-            {{ book.describe }}
-        </td>
-        <td class="title-table table-item" width="35%">
-            {{ book.date_created }}
-        </td>
-    </tr>
-    {% endfor %}
-    <tr>
-        <th colspan="5">
-            {% if page > 1 %}
-                <a href="?page={{ page - 1 }}"><<<</a>
-            {% endif %}
+<table class="main-table" id="main-table" align="center" width="90%" valign="top">
+    <tr><td width="15%" valign="top" align="left">
+         <table class="menu-table" align="left" width="100%" valign="top">
+             <tr>
+                <th>
+                    <div class="fixed">
+                        {% for row in category %}
+                            <a class="menu-item" href="javascript:void(0);" data-name="{{ row }}" data-link="category">{{ row.capitalize() }}</a><br>
+                        {% endfor %}
+                    <script>
+                        document.querySelectorAll(".menu-item").forEach(item => {
+                        item.addEventListener("click", (event) => {
+                        event.preventDefault();
 
-            {% for i in range(1, (total_books // per_page) + (1 if total_books % per_page != 0 else 0)) %}
-                {% if i == page %}
-                    <strong>{{ i }}</strong>
-                {% else %}
-                    <a href="?page={{ i }}">{{ i }}</a>
-                {% endif %}
+                        let name = event.target.dataset.name;
+                        let link = event.target.dataset.link;
+                        let url = `/select_category?name=${encodeURIComponent(name)}&link=${encodeURIComponent(link)}`;
+
+                        window.location.href = url;
+                        });
+                        });
+                    </script>
+                    </div>
+                </th>
+             </tr>
+        </table>
+        </td>
+        <td width="85%" >
+        <table class="menu-table" align="right" width="100%" valign="top">
+            <tr>
+                <th class="task-container table-item" colspan="5" align="right">{% if name %}
+                                                          Вывод данных по запросу '{{ name }}'
+                                                          {% endif %}
+                </th>
+            </tr>
+            <tr>
+                <th class="title-table table-item" width="5%">ID</th>
+                <th class="title-table table-item" width="15%">Название</th>
+                <th class="title-table table-item" width="5%">Автор</th>
+                <th class="title-table table-item" width="10%">Категория</th>
+                <th class="title-table table-item" width="30%">Описание</th>
+                <th class="title-table table-item" width="20%">Дата загрузки</th>
+            </tr>
+            {% for book in book_all %}
+            <tr class="table-string">
+                <td class="title-table table-item" width="5%">
+                    {{ book.id }}
+                </td>
+                <td class="title-table table-item" width="20%">
+                    <a href="files/{{ book.hashed }}"> {{ book.title }} </a>
+                </td>
+                <td class="title-table table-item" width="20%">
+                    {{ book.autor }}
+                </td>
+                <td class="title-table table-item" width="20%">
+                    {{ book.category }}
+                </td>
+                <td class="title-table table-item" width="35%">
+                    {{ book.describe }}
+                </td>
+                <td class="title-table table-item" width="35%">
+                    {{ book.date_created }}
+                </td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <th colspan="5">
+                    {% if page > 1 %}
+                        <a href="?page={{ page - 1 }}{% if name %}&name={{ name }}{% endif %}{% if link %}&link={{ link }}{% endif %}"><<<</a>
+                    {% endif %}
+
+                    {% for i in range(1, (total_books // per_page) + (1 if total_books % per_page != 0 else 0)) %}
+                    {% if i == page %}
+                        <strong>{{ i }}</strong>
+                    {% else %}
+                        <a href="?page={{ i }}{% if name %}&name={{ name }}{% endif %}{% if link %}&link={{ link }}{% endif %}">{{ i }}</a>
+                    {% endif %}
             {% endfor %}
 
             {% if page < (total_books // per_page) + (1 if total_books % per_page != 0 else 0) %}
-                <a href="?page={{ page + 1 }}">>>></a>
+                <a href="?page={{ page + 1 }}{% if name %}&name={{ name }}{% endif %}{% if link %}&link={{ link }}{% endif %}">>>></a>
             {% endif %}
         </th>
     </tr>
+</table>
+    </td></tr>
 </table>
 
 </body>
