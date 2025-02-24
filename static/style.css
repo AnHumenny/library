@@ -1,0 +1,113 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
+
+th {
+    vertical-align: top;
+}
+
+td {
+    vertical-align: top;
+}
+
+
+.task-item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px;
+    width: calc(25% - 20px);
+    box-sizing: border-box;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s;
+}
+
+.task-item:hover {
+    background-color: #eaeaea;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.task-user:hover {
+    background-color: #eaeaea;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+
+.task-id {
+    font-weight: normal;
+}
+
+.task-link {
+    background-color: #eaeaea;
+}
+
+.task-priority {
+    color: red;
+}
+
+.task-status {
+    color: green;
+}
+
+.user-id {
+    margin-left: 5px;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.pagination-link {
+    margin: 0 5px;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: #007bff;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.pagination-link:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.current-page {
+    margin: 0 5px;
+    padding: 8px 12px;
+    font-weight: normal;
+    color: #333;
+}
+
+.fixed-menu {
+    vertical-align: top;
+    position: fixed;
+    top: 0px; /* Отступ сверху */
+    left: 0;
+    width: 200px; /* Ширина меню */
+    background-color: #fff;
+    padding: 10px;
+    border-right: 2px solid #ddd;
+}
+
+.menu-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    padding: 300px;
+    text-decoration: none;
+    color: #000;
+
+    margin: 0 auto;
+    width: 200;
+    font-weight: 100;
+    border-bottom: 1px solid #ddd;
+}
+
+
+.menu-item:hover {
+    background-color: #f1f1f1;
+}
