@@ -1,4 +1,4 @@
-from sqlalchemy import select, insert, asc, delete, and_, desc, func
+from sqlalchemy import select, insert, delete, and_, desc, func
 from sqlalchemy.exc import NoResultFound, IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from shemas.database import DBook, DUser
@@ -15,12 +15,13 @@ new_session = async_sessionmaker(engine, expire_on_commit=False)
 
 
 class Repo:
+
     @classmethod
-    async def select_all_book(cls, session: AsyncSession, page: int, per_page: int):
-        offset = (page - 1) * per_page
-        q = select(DBook).order_by(desc(DBook.id)).offset(offset).limit(per_page)
+    async def category(cls, session: AsyncSession):
+        q = select(DBook.category).distinct()
         result = await session.execute(q)
         return result.scalars().all()
+
 
     @classmethod
     async def count_books(cls, session: AsyncSession):
@@ -28,19 +29,14 @@ class Repo:
         result = await session.execute(q)
         return result.scalar_one()
 
+
     @classmethod
-    async def sorted_category(cls, session: AsyncSession, page: int, per_page: int):
+    async def sorted_recent(cls, session: AsyncSession, page: int, per_page):
         offset = (page - 1) * per_page
-        q = select(DBook).order_by(desc(DBook.category)).offset(offset).limit(per_page)
+        q = select(DBook).order_by(desc(DBook.id)).offset(offset).limit(per_page)
         result = await session.execute(q)
         return result.scalars().all()
 
-    @classmethod
-    async def sorted_autor(cls, session: AsyncSession, page: int, per_page: int):
-        offset = (page - 1) * per_page
-        q = select(DBook).order_by(desc(DBook.autor)).offset(offset).limit(per_page)
-        result = await session.execute(q)
-        return result.scalars().all()
 
     @classmethod
     async def insert_new_book(cls, l):
@@ -54,6 +50,7 @@ class Repo:
                 except Exception as e:
                     await session.rollback()
                     raise e
+
 
     @classmethod
     async def drop_file(cls, ssid):
@@ -76,6 +73,7 @@ class Repo:
                 print("error", e)
                 await session.rollback()
                 return False
+
 
     @classmethod
     async def search_book(cls, search, temp):
@@ -106,6 +104,7 @@ class Repo:
                 await session.rollback()
                 return False
 
+
     @classmethod
     async def select_user(cls, username, password):
         async with new_session() as session:
@@ -115,4 +114,23 @@ class Repo:
             if answer is None:
                 return None
             return True
+
+
+    @classmethod
+    async def all_query(cls, session: AsyncSession, page: int, per_page: int, link: str, name: str):
+
+        offset_value = (page - 1) * per_page
+        order_field = getattr(DBook, link, None)
+        if order_field is None:
+            raise ValueError(f"Invalid field '{link}' for ordering")
+
+        q = (select(DBook)
+             .filter(DBook.category == name)
+             .order_by(desc(order_field))
+             .offset(offset_value)
+             .limit(per_page))
+
+        result = await session.execute(q)
+        return result.scalars().all()
+
 
