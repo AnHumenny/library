@@ -78,40 +78,32 @@ async def index():
     per_page = 20
     async with async_session() as sessions:
         async with sessions.begin():
-            books = await Repo.select_all_book(sessions, page, per_page)
+            category = await Repo.category(sessions)
+            books = await Repo.sorted_recent(sessions, page, per_page)
             total_books = await Repo.count_books(sessions)
         return await render_template(
             'index.html', book_all=books, total_books=total_books,
-                                           page=page, per_page=per_page
+                                           page=page, per_page=per_page, category=category
         )
 
 
-@app.route('/category')
-async def sorted_category():
+@app.route("/select_category", methods=['GET'])
+async def query_method():
+    name = request.args.get("name")
+    link = request.args.get("link")
     page = int(request.args.get('page', 1))
     per_page = 20
     async with async_session() as sessions:
         async with sessions.begin():
-            books = await Repo.sorted_category(sessions, page, per_page)
+            category = await Repo.category(sessions)
+            books = await Repo.all_query(sessions, page, per_page, link, name)
             total_books = await Repo.count_books(sessions)
+
         return await render_template(
-            'index.html', book_all=books, total_books=total_books,
-                                           page=page, per_page=per_page
+            'index.html', book_all=books, total_books=total_books, name=name,
+            page=page, per_page=per_page, link=link, category=category
         )
 
-
-@app.route('/autor')
-async def sorted_autor():
-    page = int(request.args.get('page', 1))
-    per_page = 20
-    async with async_session() as sessions:
-        async with sessions.begin():
-            books = await Repo.sorted_category(sessions, page, per_page)
-            total_books = await Repo.count_books(sessions)
-        return await render_template(
-            'index.html', book_all=books, total_books=total_books,
-            page=page, per_page=per_page
-        )
 
 @app.route('/search', methods=['POST'])
 async def search_book_author():
@@ -146,7 +138,7 @@ async def upload_form():
 
 def create_directory(now):
     create_folder = now.strftime("%Y-%m-%d")
-    dir_name = os.path.join("files", create_folder)
+    dir_name = os.path.join(f"files/{create_folder[:4]}", create_folder)
     try:
         os.makedirs(dir_name, exist_ok=True)
         return create_folder
@@ -190,8 +182,10 @@ async def upload_file():
     file_hash = generate_file_hash(file)
     file_extension = file.filename.rsplit('.', 1)[1].lower()
     dir_name = create_directory(now)
-    new_filename = f"{dir_name}/{title}_{file_hash}.{file_extension}"
+    print("dir_name", dir_name)
+    new_filename = f"{dir_name[:4]}/{dir_name}/{title}_{file_hash}.{file_extension}"
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
+    print("file_path", file_path)
     await file.save(file_path)
 
     l = [title, author, category, description, new_filename, date]
