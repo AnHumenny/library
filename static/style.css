@@ -1,56 +1,79 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
+    font-size: 12px;
 }
 
-th {
-    vertical-align: top;
+.task-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: 0 auto;
+    width: 90%;
 }
 
-td {
-    vertical-align: top;
+.links-container {
+    display: flex;
+    gap: 20px;
+    width: 100%;
 }
-
 
 .task-item {
     border: 1px solid #ccc;
     padding: 10px;
     margin: 10px;
-    width: calc(25% - 20px);
     box-sizing: border-box;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     transition: box-shadow 0.3s;
 }
 
-.task-item:hover {
-    background-color: #eaeaea;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+.task-personal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    width: auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 5px 0;
+    font-size: 1.2rem;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background-color: #fff;
 }
 
-.task-user:hover {
-    background-color: #eaeaea;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+.task-personal:hover {
+    background-color: #f5f5f5;
+    transition: background-color 0.3s ease;
+    padding: 20px 20px;
+}
+th {
+    font-size: 12px;
 }
 
 
-.task-id {
-    font-weight: normal;
+.nav-link {
+    text-decoration: none;
+    color: #007bff;
+    padding: 5px 10px;
+    white-space: nowrap;
 }
 
-.task-link {
-    background-color: #eaeaea;
+.task-personal form {
+    display: flex;
+    align-items: right;
+    gap: 50px;
 }
 
-.task-priority {
-    color: red;
+.task-personal form input[type="text"] {
+    padding: 5px;
 }
 
-.task-status {
-    color: green;
-}
-
-.user-id {
-    margin-left: 5px;
+.task-personal form input[type="submit"] {
+    padding: 5px 10px;
 }
 
 .pagination {
@@ -74,40 +97,7 @@ td {
     color: white;
 }
 
-.current-page {
-    margin: 0 5px;
-    padding: 8px 12px;
-    font-weight: normal;
-    color: #333;
-}
-
-.fixed-menu {
-    vertical-align: top;
-    position: fixed;
-    top: 0px; /* Отступ сверху */
-    left: 0;
-    width: 200px; /* Ширина меню */
-    background-color: #fff;
-    padding: 10px;
-    border-right: 2px solid #ddd;
-}
-
-.menu-item {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: block;
-    padding: 300px;
-    text-decoration: none;
-    color: #000;
-
-    margin: 0 auto;
-    width: 200;
-    font-weight: 100;
-    border-bottom: 1px solid #ddd;
-}
 
 
-.menu-item:hover {
-    background-color: #f1f1f1;
-}
+
+\
