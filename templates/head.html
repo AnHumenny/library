@@ -3,49 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-    <title>Главная страница</title>
-    <script>
-        function validateForm() {
-            const radios = document.querySelectorAll('input[type="radio"]');
-            const atLeastOneChecked = Array.from(radios).some(radio => radio.checked);
-            if (!atLeastOneChecked) {
-            alert('Пожалуйста, выберите один фильтр.');
-        return false;
-        }
-    return true;
-    }
-</script>
+    <title>главная страница</title>
 </head>
-
 <body>
+<div class="task-personal">
+    <table class="task-item"  id="main-table" align="center" width="100%" valign="top">
+        <tr>
+            <th class="task-item" width="70%" valign="top" align="left" rowspan="2">
+                <form method="post" action="/search" enctype="multipart/form-data">
+                    <label for="search">&nbsp;&nbsp;&nbsp;Поиск</label>
+                    <input type="text" name="search" id="search" required pattern=".{3,}" title="Введите не менее 3 символов">
+                    <input type="submit" value="Отправить">
+                    <input type="radio" name="search_type" value="author" required> Автор
+                    <input type="radio" name="search_type" value="category"> Категория
+                    <input type="radio" name="search_type" value="title"> Название
+                </form>
+            </th>
+            <th align="right"><a class="nav-link" href="/">Каталог</a></th>
+            <th align="right"><a class="nav-link" href="/upload">Загрузить файл</a></th>
+            <th align="right"><a class="nav-link" href="/delete">Удалить файл</a></th>
+        </tr>
+        <tr>
+            <td colspan="3"></td>
+        </tr>
+    </table>
+</div>
 
-<table width="95%" class="main-table" id="main-table" align="center" valign="top">
-
-    <tr>
-        <td>
-            <a class="nav-link" href="/">Каталог</a>
-        </td>
-        <td>
-            <a class="nav-link" href="/upload">Загрузить файл</a>
-        </td>
-        <td>
-            <a class="nav-link" href="/delete">Удалить файл</a>
-        </td>
-        <th valign="2">
-            <form method="post" action="/search" enctype="multipart/form-data">
-                <label for="search">Поиск &nbsp;&nbsp;  </label>
-                <input type="text" name="search" id="search" required pattern=".{3,}"
-                       title="Введите не менее 3 символов">   &nbsp; &nbsp; &nbsp;
-                <br>
-                <input type="radio" name="search_type" value="author" required> Автор &nbsp; &nbsp; &nbsp;
-                <input type="radio" name="search_type" value="category"> Категория &nbsp; &nbsp; &nbsp;
-                <input type="radio" name="search_type" value="title"> Название &nbsp; &nbsp; &nbsp;
-                <input type="submit" value="Отправить">
-            </form>
-        </th>
-    </tr>
-</table>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
