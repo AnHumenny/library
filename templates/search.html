@@ -1,6 +1,6 @@
 {% include 'head.html' %}
 <body>
-<table class="main-table" id="main-table" align="center" width="90%">
+<table class="main-table" align="center" width="90%">
     <tr>
         <th class="title-table table-item" width="5%">ID</th>
         <th class="title-table table-item" width="20%">Название</th>
@@ -10,24 +10,24 @@
     </tr>
     {% for book in books %}
     <tr class="table-string">
-        <td class="title-table table-item" width="5%">
+        <th class="title-table table-item" width="5%">
             {{ book.id }}
-        </td>
-        <td class="title-table table-item" width="20%">
-            <a href="files/{{ book.hashed }}"> {{ book.title }} </a>
-        </td>
-        <td class="title-table table-item" width="20%">
+        </th>
+        <th class="title-table table-item" width="20%">
+            <a class="nav-link" href="files/{{ book.hashed }}"> {{ book.title }} </a>
+        </th>
+        <th class="title-table table-item" width="20%">
             {{ book.autor }}
-        </td>
-        <td class="title-table table-item" width="20%">
+        </th>
+        <th class="title-table table-item" width="20%">
             {{ book.category }}
-        </td>
-        <td class="title-table table-item" width="35%">
+        </th>
+        <th class="title-table table-item" width="35%">
             {{ book.describe }}
-        </td>
+        </th>
     </tr>
     {% endfor %}
-    <tr><td colspan="5" align="center"><br><br>
+    <tr><th colspan="5" align="center"><br><br>
         {{ err }}
-    </td></tr>
+    </th></tr>
 </table>
