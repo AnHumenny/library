@@ -125,10 +125,11 @@ async def search_book_author():
     async with async_session() as sessions:
         async with sessions.begin():
             books = await Repo.search_book(search, search_type)
+            category = await Repo.category(sessions)
             if books is None:
                 return await render_template('search.html', err='По запросу ничего не найдено,'
                                                                   ' измените параметры поиска')
-    return await render_template('search.html',books=books, access=access)
+    return await render_template('search.html',books=books, access=access, category=category)
 
 
 def generate_file_hash(file):

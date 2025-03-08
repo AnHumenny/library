@@ -31,7 +31,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
     width: auto;
     flex-wrap: nowrap;
     overflow-x: auto;

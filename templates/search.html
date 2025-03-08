@@ -1,12 +1,41 @@
 {% include 'head.html' %}
 <body>
-<table class="main-table" align="center" width="90%">
+<table class="main-table" align="center" width="95%" valign="top">
+    <tr><th valign="top">
+    <table align="left" width="10%" valign="top">
+            <tr>
+                <th width="15%" valign="top" align="left">
+                    {% for row in category %}
+                        <a class="pagination-link" href="javascript:void(0);" data-name="{{ row }}"
+                           data-link="category">{{ row.capitalize() }}</a><br><br>
+                    {% endfor %}
+
+<script>
+    document.querySelectorAll(".pagination-link").forEach(item => {
+        item.addEventListener("click", (event) => {
+            event.preventDefault();
+
+            let name = event.target.dataset.name;
+            let link = event.target.dataset.link;
+            let url = `/select_category?name=${encodeURIComponent(name)}&link=${encodeURIComponent(link)}`;
+
+            window.location.href = url;
+        });
+    });
+</script>
+                </th>
+            </tr>
+        </table>
+    </th>
+    <th>
+    <table align="right" width="90%" valign="top">
     <tr>
         <th class="title-table table-item" width="5%">ID</th>
         <th class="title-table table-item" width="20%">Название</th>
         <th class="title-table table-item" width="20%">Автор</th>
         <th class="title-table table-item" width="20%">Категория</th>
         <th class="title-table table-item" width="35%">Описание</th>
+        <th class="title-table table-item" width="20%">Дата загрузки</th>
     </tr>
     {% for book in books %}
     <tr class="table-string">
@@ -25,9 +54,14 @@
         <th class="title-table table-item" width="35%">
             {{ book.describe }}
         </th>
+        <td width="35%">
+            {{ book.date_created }}
+        </td>
     </tr>
     {% endfor %}
     <tr><th colspan="5" align="center"><br><br>
         {{ err }}
     </th></tr>
+</table>
+</th></tr>
 </table>
