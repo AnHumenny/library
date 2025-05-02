@@ -5,7 +5,7 @@ blinker==1.9.0
 click==8.1.7
 Flask==3.1.0
 greenlet==3.1.1
-h11==0.15.0
+h11==0.16.0
 h2==4.1.0
 hpack==4.0.0
 Hypercorn==0.17.3
