@@ -24,6 +24,17 @@
             <th align="right"><a class="nav-link" href="/">Каталог</a></th>
             <th align="right"><a class="nav-link" href="/upload">Загрузить файл</a></th>
             <th align="right"><a class="nav-link" href="/delete">Удалить файл</a></th>
+            <th align="right">
+                {% if access %}
+                    <a href="/logout">
+                       <img src="{{ url_for('static', filename='images/exit.png') }}" title="Выход">
+                    </a>
+                {% else %}
+                    <a href="/login">
+                        <img src="{{ url_for('static', filename='images/enter.png') }}" title="Вход">
+                    </a>
+                {% endif %}
+            </th>
         </tr>
         <tr>
             <td colspan="3"></td>

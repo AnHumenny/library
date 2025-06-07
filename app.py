@@ -1,5 +1,7 @@
+import jwt
 import hashlib
-from datetime import datetime
+from functools import wraps
+from datetime import datetime, timedelta, timezone
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature, BadData
 import os
 from quart import Quart, request, render_template, send_from_directory, jsonify, redirect, url_for, session
@@ -28,32 +30,43 @@ async def serve_file(filename):
 
 
 def generate_token(username):
-    return serializer.dumps(username)
+    """generation token"""
+    payload = {
+        'user': username,
+        'exp': datetime.now(timezone.utc) + timedelta(hours=1)
+    }
+    return jwt.encode(payload, algorithm='HS256')
 
 
 def verify_token(token):
-    """Token verification."""
+    """verification token"""
+    if not token:
+        return False, None
     try:
-        username = serializer.loads(token, max_age=3600)
-        return username
-    except SignatureExpired:
-        print("Токен истек.")
-        return None
-    except BadSignature:
-        print("Недействительная подпись токена.")
-        return None
-    except BadData:
-        print("Некорректные данные токена.")
-        return None
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-        return None
+        payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=['HS256'])
+        username = payload.get('username')
+        return True, username
+    except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
+        return False, None
 
 
-@app.route('/login')
-async def log():
-    """Redirecting to the authorization page"""
-    return await render_template("login.html")
+def token_required(f):
+    """checking the token by validation (control panel)"""
+    @wraps(f)
+    async def decorated(*args, **kwargs):
+        token = request.cookies.get('token')
+        if not token:
+            return jsonify({"message": "Токен отсутствует"}), 401
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            if not data:
+                return jsonify({"message": "Недостаточно прав"}), 403
+        except jwt.ExpiredSignatureError:
+            return jsonify({"message": "Токен истек"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"message": "Неверный токен"}), 401
+        return await f(*args, **kwargs)
+    return decorated
 
 
 def hash_password(password: str) -> str:
@@ -61,20 +74,45 @@ def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 async def login():
     """Authorization."""
+    if request.method == 'GET':
+        return await render_template('login.html')
+
     form_data = await request.form
-    username = form_data.get('username')
+    username = form_data.get('user')
     password = form_data.get('password')
     hashed_password = hash_password(password)
-    answer = await Repo.select_user(username, hashed_password)
-    if answer is True:
-        token = generate_token(username)
-        session['token'] = token
-        return redirect(url_for('index'))
-    return jsonify({"message": "Ошибка доступа"}), 401
+    user = await Repo.select_user(username, hashed_password)
 
+    if user:
+        token = jwt.encode(
+            {
+                'username': user.username,
+                'exp': datetime.now(timezone.utc) + timedelta(hours=1)
+            },
+            app.config['SECRET_KEY'],
+            algorithm='HS256'
+        )
+
+        response = redirect(url_for('index'))
+        response.set_cookie(
+            'token',
+            token,
+            httponly=True,
+            secure=False,
+            samesite="Lax"
+        )
+        return response
+    return jsonify({"message": "Access error"}), 401
+
+@app.route('/logout')
+async def logout():
+    response = redirect(url_for('login'))
+    session.pop('token', None)
+    response.set_cookie('token', '', expires=0)
+    return response
 
 @app.route('/')
 async def index():
@@ -142,6 +180,7 @@ def generate_file_hash(file):
 
 
 @app.route('/upload')
+@token_required
 async def upload_form():
     """Redirect to upload form."""
     token = session.get('token')  # Извлечение токена из сессии
@@ -168,6 +207,7 @@ def allowed_file(filename):
 
 
 @app.route('/upload', methods=['POST'])
+@token_required
 async def upload_file():
     """Upload file."""
     now = datetime.now()
@@ -189,8 +229,7 @@ async def upload_file():
         return await render_template("upload.html", success=q)
 
     if not allowed_file(file.filename):
-        q = ('Недопустимый тип файла. Пожалуйста, загрузите файл с одним из следующих расширений: '
-              '.doc', '.pdf')
+        q = "Недопустимый тип файла. Пожалуйста, загрузите файл с одним из следующих расширений: '.pdf'"
         return await render_template("upload.html", success=q)
 
     if file.content_length > app.config['MAX_CONTENT_LENGTH']:
@@ -212,6 +251,7 @@ async def upload_file():
 
 
 @app.route('/delete')
+@token_required
 async def delete_file():
     """Redirect to delete file."""
     token = session.get('token')
@@ -222,6 +262,7 @@ async def delete_file():
 
 
 @app.route('/drop_file', methods=['POST'])
+@token_required
 async def drop_file():
     """Delete file."""
     token = session.get('token')

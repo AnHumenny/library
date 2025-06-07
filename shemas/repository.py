@@ -119,12 +119,12 @@ class Repo:
         ssid = int(ssid)
         async with new_session() as session:
             try:
-                query = select(DBook).where(DBook.id == int(ssid))
+                query = select(DBook).where(DBook.id == int(ssid))   # type: ignore
                 result = await session.execute(query)
                 record = result.scalar_one_or_none()
                 if record is None:
                     return f"Файл с указанным идентификатором {ssid} не найден."
-                delete_query = delete(DBook).where(DBook.id == int(ssid))
+                delete_query = delete(DBook).where(DBook.id == int(ssid))   # type: ignore
                 await session.execute(delete_query)
                 await session.commit()
                 return f"Файл с указанным идентификатором {ssid} успешно удалён!"
@@ -183,7 +183,6 @@ class Repo:
                 await session.rollback()
                 return False
 
-
     @classmethod
     async def select_user(cls, username, password):
         """Checks if a user exists with the given username and password.
@@ -194,7 +193,7 @@ class Repo:
                 password (str): Password to check (expected to be hashed).
 
             Returns:
-                bool: True if user exists with matching credentials, None if not found.
+               bool: True if user exists with matching credentials, None if not found.
 
             Raises:
                 SQLAlchemyError: If query execution fails.
@@ -206,7 +205,7 @@ class Repo:
             answer = result.scalar()
             if answer is None:
                 return None
-            return True
+            return answer
 
 
     @classmethod
@@ -234,12 +233,10 @@ class Repo:
         if order_field is None:
             raise ValueError(f"Invalid field '{link}' for ordering")
         q = (select(DBook)
-             .filter(DBook.category == name)
+             .filter(DBook.category == name)     # type: ignore
              .order_by(desc(order_field))
              .offset(offset_value)
              .limit(per_page))
 
         result = await session.execute(q)
         return result.scalars().all()
-
-
