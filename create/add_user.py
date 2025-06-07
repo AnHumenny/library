@@ -24,8 +24,8 @@ async def create_user(username, password):
 
 
 async def main():
-    user = 'user'
-    password = 'user'
+    user = 'test'
+    password = 'test'
     await create_user(user, password)
 
 if __name__ == "__main__":
